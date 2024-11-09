@@ -13,42 +13,30 @@ class KatalogController extends Controller
 {
     public function index(Request $request)
     {
-        $query = $request->input('query');
-        $kategori = $request->input('kategori');
-        $urutan = $request->input('urutan', 'asc');
+        // Retrieve sorting and search parameters
+        $sort = $request->input('sort', 'asc'); // Default to ascending
+        $category = $request->input('category', 'all');
+        $search = $request->input('search');
 
-        $data = [];
+        // Define base query for each model
+        $items = collect();
 
-        if ($kategori === 'buku' || !$kategori) {
-            $data['bukus'] = Buku::when($query, function ($q) use ($query) {
-                return $q->where('judul', 'like', "%$query%");
-            })->orderBy('tahun_terbit', $urutan)->get();
+        if ($category == 'buku' || $category == 'all') {
+            $items = $items->merge(Buku::query()->where('judul', 'LIKE', "%{$search}%")->orderBy('judul', $sort)->get());
+        }
+        if ($category == 'jurnal' || $category == 'all') {
+            $items = $items->merge(Jurnal::query()->where('judul', 'LIKE', "%{$search}%")->orderBy('judul', $sort)->get());
+        }
+        if ($category == 'cd' || $category == 'all') {
+            $items = $items->merge(CD::query()->where('judul', 'LIKE', "%{$search}%")->orderBy('judul', $sort)->get());
+        }
+        if ($category == 'koran' || $category == 'all') {
+            $items = $items->merge(Koran::query()->where('judul', 'LIKE', "%{$search}%")->orderBy('judul', $sort)->get());
+        }
+        if ($category == 'skripsi' || $category == 'all') {
+            $items = $items->merge(Skripsi::query()->where('judul', 'LIKE', "%{$search}%")->orderBy('judul', $sort)->get());
         }
 
-        if ($kategori === 'jurnal' || !$kategori) {
-            $data['jurnals'] = Jurnal::when($query, function ($q) use ($query) {
-                return $q->where('judul', 'like', "%$query%");
-            })->orderBy('tahun_terbit', $urutan)->get();
-        }
-
-        if ($kategori === 'cd' || !$kategori) {
-            $data['cds'] = CD::when($query, function ($q) use ($query) {
-                return $q->where('judul', 'like', "%$query%");
-            })->orderBy('tahun_terbit', $urutan)->get();
-        }
-
-        if ($kategori === 'koran' || !$kategori) {
-            $data['korans'] = Koran::when($query, function ($q) use ($query) {
-                return $q->where('judul', 'like', "%$query%");
-            })->orderBy('tahun_terbit', $urutan)->get();
-        }
-
-        if ($kategori === 'skripsi' || !$kategori) {
-            $data['skripsis'] = Skripsi::when($query, function ($q) use ($query) {
-                return $q->where('judul', 'like', "%$query%");
-            })->orderBy('tahun_terbit', $urutan)->get();
-        }
-
-        return view('katalog.index', compact('data', 'query', 'kategori', 'urutan'));
+        return view('katalog.index', compact('items', 'sort', 'category', 'search'));
     }
 }
